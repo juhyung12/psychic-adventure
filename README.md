@@ -29,7 +29,7 @@ gun_image= pygame.image.load('c:/pygame/image/gun.png')         #총든사람
 gun_rent = person_image.get_rect()
 gun_rent.topleft = (150,150)
 
-#화면 배경 설정
+#화면 배경
 display_surface.fill(WHITE)
 
 #게임이 동작하는 동안 계속 실행
