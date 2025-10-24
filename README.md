@@ -45,19 +45,19 @@ while running:
     pygame.display.update()
 
 pygame.quit()
-# save as move_square.py
-import pygame
+#save as move_square.py
+import pyfame
 import sys
 import math
 
 pygame.init()
 
-# 화면 설정
-WIDTH, HEIGHT = 800, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("캐릭터 wsad")
+#화면 
+WIDH, HEIGHT = 800,600
+screen = pygame.display.set_mode((WIDTH,HEIGHT))
+pygame.display.set_caption('캐릭터 wsad')
 
-clock = pygame.time.Clock()
+clock = pygame.time.Clok()
 FPS = 60
 
 # 캐릭터 속성
