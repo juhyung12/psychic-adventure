@@ -1,6 +1,8 @@
 # psychic-adventure# psychic-adventure
 
 import pygame
+import sys
+import math
 
 #초기화
 pygame.init()                           #초기화
@@ -276,8 +278,8 @@ while running:
 
  # 키 상태 읽기 (연속 이동)
  keys = pygame.key.get_pressed()
-    dx = 0
-    dy = 0
+ dx = 0
+ dy = 0
  if keys[pygame.K_w]:  # 위
         dy -= 1
  if keys[pygame.K_s]:  # 아래
