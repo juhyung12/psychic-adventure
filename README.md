@@ -239,6 +239,208 @@ carve()
 carve_exits()
 draw_maze()
 
+import pygame  
+import random  
+#주석'''되어있는 부분 #지우면 랜덤 생성만 남음
+# ───────────── 기본 설정 ─────────────
+pygame.init() 
+
+# 변수
+width, height = 1200, 600
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("랜덤 아이템 게임")
+
+# 색 (대문자 유지)
+WHITE = (255, 255, 255)
+YELLOW = (255, 255, 0)
+RED = (255, 0, 0)
+BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
+
+# 객체 크기
+player_size = 40
+box_size = 30
+bomb_size = 20
+
+# 플레이어 속도
+player_speed = 5
+
+# 박스 생성 주기
+spawn_tick = 120
+
+# 아이템 종류 및 확률
+items = ["열쇠", "스피드 물약", "폭탄"]
+item_weights = [20, 40, 40]
+
+# ───────────── 클래스 정의 ─────────────
+
+#''' [플레이어 클래스 시작]
+class Player:
+    def __init__(self):
+        # 플레이어의 초기 위치(화면 중앙)와 크기를 가진 사각형(Rect) 생성
+        self.rect = pygame.Rect(width//2, height//2, player_size, player_size)
+        self.base_speed = player_speed  # 기본 속도 저장
+        self.speed = player_speed       # 현재 속도 (버프에 따라 변함)
+        self.boost_end_time = 0         # 속도 버프가 끝나는 시간
+
+    def move(self, keys):
+        """키보드 입력에 따라 플레이어 이동"""
+        if keys[pygame.K_LEFT] and self.rect.left > 0:
+            self.rect.x -= self.speed
+        if keys[pygame.K_RIGHT] and self.rect.right < width:
+            self.rect.x += self.speed
+        if keys[pygame.K_UP] and self.rect.top > 0:
+            self.rect.y -= self.speed
+        if keys[pygame.K_DOWN] and self.rect.bottom < height:
+            self.rect.y += self.speed
+
+    def apply_speed_boost(self):
+        """스피드 물약 획득 시 호출"""
+        self.speed = self.base_speed * 2
+        self.boost_end_time = pygame.time.get_ticks() + 5000 
+
+    def update_status(self):
+        """버프 시간 만료 확인"""
+        current_time = pygame.time.get_ticks()
+        if self.boost_end_time > 0 and current_time > self.boost_end_time:
+            self.speed = self.base_speed
+            self.boost_end_time = 0
+            print("속도 버프 종료!")
+
+    def draw(self, screen):
+        """플레이어를 화면에 그림"""
+        color = BLUE if self.boost_end_time > 0 else RED
+        pygame.draw.rect(screen, color, self.rect)
+
+class PlacedBomb:
+    def __init__(self, x, y):
+        """플레이어가 설치한 폭탄 클래스"""
+        self.rect = pygame.Rect(x, y, bomb_size, bomb_size)
+    
+    def draw(self, screen):
+        """설치된 폭탄 그리기"""
+        center = self.rect.center
+        pygame.draw.circle(screen, BLACK, center, bomb_size // 2)
+#''' [플레이어 클래스 끝]
+
+
+class Box:
+    def __init__(self):
+        # 화면 내 랜덤한 X, Y 좌표 생성
+        x = random.randint(0, width - box_size)
+        y = random.randint(0, height - box_size)
+        self.rect = pygame.Rect(x, y, box_size, box_size)
+
+    def draw(self, screen):
+        """박스를 화면에 그림"""
+        pygame.draw.rect(screen, YELLOW, self.rect)
+
+
+# ───────────── 메인 게임 루프 ─────────────
+def main():
+    clock = pygame.time.Clock()
+    
+    boxes = []           # 생성된 아이템 박스 리스트
+    tick_count = 0       # 시간 흐름 변수
+    running = True
+    
+    font = pygame.font.SysFont("malgungothic", 20)
+
+    # UI 표시를 위한 변수는 플레이어 유무와 상관없이 존재해야 하므로 밖으로 뺌
+    last_item_msg = "없음"
+    bomb_inventory = 0   # 폭탄 개수
+
+    #''' [플레이어 객체 생성]
+    player = Player()    # 플레이어 생성
+    placed_bombs = []    # 설치된 폭탄 리스트
+    #'''
+
+    while running:
+        
+        screen.fill(WHITE)
+
+        # 이벤트 처리
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            
+            #''' [스페이스바 입력]
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and bomb_inventory > 0:
+                    new_bomb = PlacedBomb(player.rect.centerx - bomb_size//2, 
+                                          player.rect.centery - bomb_size//2)
+                    placed_bombs.append(new_bomb)
+                    bomb_inventory -= 1
+                    print("폭탄 설치 완료!")
+            #'''
+
+        #''' [플레이어 이동]
+        keys = pygame.key.get_pressed()
+        player.move(keys)
+        player.update_status()
+        #'''
+
+        # 박스 생성 로직 (플레이어와 무관하게 작동)
+        tick_count += 1
+        if tick_count >= spawn_tick:
+            boxes.append(Box())
+            tick_count = 0
+
+        #''' [충돌 및 아이템 획득]
+        # 플레이어가 없으면 충돌 체크도 필요 없음
+        for box in boxes[:]:
+            if player.rect.colliderect(box.rect):
+                got_item = random.choices(items, weights=item_weights, k=1)[0]
+                last_item_msg = got_item
+                print(f"획득한 아이템: {got_item}")
+
+                if got_item == "스피드 물약":
+                    player.apply_speed_boost()
+                elif got_item == "폭탄":
+                    bomb_inventory += 1
+                
+                boxes.remove(box) # 먹은 박스 제거
+        #'''
+
+        # 화면 그리기
+        
+        #''' [폭탄 그리기]
+        for bomb in placed_bombs:
+            bomb.draw(screen)
+        #'''
+
+        # 박스는 항상 그림
+        for box in boxes:
+            box.draw(screen)
+            
+        #''' [플레이어 그리기]
+        player.draw(screen)
+        #'''
+
+        # 정보 텍스트 (아이템, 폭탄 텍스트는 플레이어가 없어도 표시됨)
+        info_text1 = font.render(f"마지막 아이템: {last_item_msg}", True, BLACK)
+        info_text2 = font.render(f"보유 폭탄: {bomb_inventory}개 (Space로 설치)", True, BLACK)
+        screen.blit(info_text1, (10, 10))
+        screen.blit(info_text2, (10, 40))
+        
+        #''' [속도 텍스트 - 플레이어 정보 필요]
+        speed_msg = "속도: 기본"
+        if player.boost_end_time > 0:
+             remain_time = (player.boost_end_time - pygame.time.get_ticks()) / 1000
+             speed_msg = f"속도: 2배! ({remain_time:.1f}초 남음)"
+        info_text3 = font.render(speed_msg, True, BLUE if player.boost_end_time > 0 else BLACK)
+        screen.blit(info_text3, (10, 70))
+        #'''
+        
+        # 화면 업데이트
+        pygame.display.flip()
+        clock.tick(60)
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
+
 pygame.quit()
 #save as move_square.py
 import pyfame
