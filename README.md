@@ -45,7 +45,9 @@ while running:
     display_surface.blit(gun_image, gun_rent)
     #디스레이 업데이트
     pygame.display.update()
+#박주형 끝
 
+#배서윤 시작
 import numpy as np
 import matplotlib.pyplot as plt
 import random
@@ -238,6 +240,10 @@ clear_center()
 carve()
 carve_exits()
 draw_maze()
+
+#배서윤 끝
+
+#유은별 시작
 
 import pygame  
 import random  
@@ -441,9 +447,12 @@ def main():
 if __name__ == "__main__":
     main()
 
+#유은별 끝
+
+#김도현 시작
+
 pygame.quit()
 #save as move_square.py
-import pyfame
 import sys
 import math
 
